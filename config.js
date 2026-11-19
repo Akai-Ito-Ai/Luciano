@@ -7,7 +7,7 @@ window.INVITATION_CONFIG = {
   timeZone: 'America/Bogota',
   utcOffset: '-05:00',
   durationHours: 3,
-  venue: 'Salón Comunal Belaire',
+  venue: 'Salón Social Belaire',
   address: 'Carrera 6 # 151 - 79',
   mapsUrl: 'https://maps.app.goo.gl/vcwxVgJ2M82gq2Yv6', // URL completa de Google Maps.
   rsvpDeadline: '', // Ejemplo: '2026-12-05'.
