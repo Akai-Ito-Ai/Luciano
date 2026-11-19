@@ -12,11 +12,11 @@ python3 -m http.server 4173 --bind 127.0.0.1
 
 Abre <http://localhost:4173>. No requiere npm ni compilación. El código de la web está en `index.html`, `styles.css`, `app.js`, `services.js`, `decorations.js`, `welcome.js` y `config.js`.
 
-Sin configuración de Supabase funciona como **vista previa**: la franja y los formularios lo indican. Las confirmaciones y reservas de ejemplo se guardan solo en este navegador. No se comparten entre dispositivos. Los seis regalos son ideas de muestra, no la selección de los papás. La música incluida es una pequeña composición instrumental de muestra creada para esta propuesta.
+Sin configuración de Supabase funciona como **vista previa**: la franja y los formularios lo indican. Las confirmaciones y reservas de ejemplo se guardan solo en este navegador. No se comparten entre dispositivos. Los seis regalos son ideas de muestra, no la selección de los papás. La música usa la canción entregada por los papás para Luciano.
 
 ## Personalizar
 
-Edita `config.js` para poner hora, lugar, dirección, enlace a Maps, fecha límite de confirmación y canción. Pon el archivo de audio en `assets/` y cambia `music.url` y su título. La música empieza únicamente al pulsar play. La fecha se interpreta en Colombia. Mientras falte la hora, el calendario guarda un evento de día completo marcado como pendiente.
+Edita `config.js` para poner hora, lugar, dirección, enlace a Maps, fecha límite de confirmación y canción. Pon el archivo de audio en `assets/` y cambia `music.url` y su título. La música empieza únicamente al pulsar play. El original se conserva en `assets/cancion_luciano.wav`; el reproductor usa `assets/cancion_luciano.m4a`, una copia AAC a 160 kbps de la misma canción para reducir la descarga en celular. La copia se genera con `afconvert -f m4af -d 'aac ' -b 160000 -q 127 assets/cancion_luciano.wav assets/cancion_luciano.m4a` en macOS. La fecha se interpreta en Colombia. Mientras falte la hora, el calendario guarda un evento de día completo marcado como pendiente.
 
 La primera versión usa 2026 porque el pedido se hizo en octubre de ese año. Cambia `eventDate` si corresponde otro año.
 
@@ -96,4 +96,4 @@ La invitación está publicada en <https://luciano-beta.vercel.app/> desde el re
 
 `assets/dinosaurios.png` es una ilustración original creada con la herramienta integrada ImageGen. Prompt: dos dinosaurios bebés (brontosaurio verde salvia y triceratops terracota), un huevito, eucaliptos, helechos y pequeñas flores, acuarela de cuento infantil sobre papel marfil, sin texto. El prompt completo está en `assets/illustration-prompt.txt`.
 
-Tipografías Caveat y Quicksand de Google Fonts: copias locales y licencias SIL Open Font License incluidas en `assets/`. Los archivos de las fuentes anteriores se conservan, pero la página ya no los usa. Los iconos SVG y la melodía de muestra se crearon para esta invitación.
+Tipografías Caveat y Quicksand de Google Fonts: copias locales y licencias SIL Open Font License incluidas en `assets/`. Los archivos de las fuentes anteriores se conservan, pero la página ya no los usa. Los iconos SVG se crearon para esta invitación. La canción actual fue entregada por los papás; el audio de muestra anterior se conserva como archivo, pero ya no se reproduce.

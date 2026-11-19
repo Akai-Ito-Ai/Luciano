@@ -12,9 +12,9 @@ window.INVITATION_CONFIG = {
   mapsUrl: 'https://maps.app.goo.gl/vcwxVgJ2M82gq2Yv6', // URL completa de Google Maps.
   rsvpDeadline: '', // Ejemplo: '2026-12-05'.
   music: {
-    url: 'assets/bienvenida.wav',
-    title: 'Una pequeña bienvenida',
-    subtitle: 'Melodía instrumental de muestra',
+    url: 'assets/cancion_luciano.m4a',
+    title: 'Una canción para Luciano',
+    subtitle: 'Un momento para celebrar juntos',
   },
   supabase: {
     url: 'https://cmmnikvsrfnpweviswtz.supabase.co',
