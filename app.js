@@ -127,7 +127,7 @@
     try {
       const fields = rsvpForm.elements;
       const attending = fields.attending.value === 'yes';
-      await api.saveRsvp({ name: fields.name.value, email: fields.email.value, attending, partySize: fields.partySize.value, message: fields.message.value });
+      await api.saveRsvp({ name: fields.name.value, attending, partySize: fields.partySize.value, message: fields.message.value });
       success(api.demo ? '¡Prueba guardada!' : attending ? '¡Qué alegría verte!' : 'Gracias por contarnos.', api.demo ? 'Tu respuesta de prueba se guardó solo en este navegador. Todavía no se ha enviado a los papás.' : attending ? 'Tu asistencia está confirmada. Nos llena de ilusión que seas parte de este día tan especial para Luciano.' : 'Recibimos tu respuesta. Aunque no puedas venir, sentimos todo tu cariño.');
     } catch (error) { showError('#rsvp-error', error); }
     finally { setSaving(submit, false); }
@@ -143,7 +143,7 @@
     else picture.append(icon('p-' + (['clothes','blanket','bath','book','bottle','bear'].includes(gift.icon) ? gift.icon : 'bear')));
     const content = element('div', 'gift-content'); content.append(element('h3', '', gift.name), element('p', '', gift.description || 'Un detalle para sus primeras aventuras.'));
     const actions = element('div', 'gift-actions'); const reserve = element('button', 'button reserve-button', 'Reservar regalo'); reserve.setAttribute('aria-label', 'Reservar ' + gift.name); reserve.append(icon('i-gift'));
-    reserve.addEventListener('click', () => { selectedGift = gift; $('#selected-gift-name').textContent = gift.name; $('#gift-error').hidden = true; const person = rsvpForm.elements; const fields = $('#gift-form').elements; if (person.name.value) fields.name.value = person.name.value; if (person.email.value) fields.email.value = person.email.value; openDialog('#gift-dialog'); });
+    reserve.addEventListener('click', () => { selectedGift = gift; $('#selected-gift-name').textContent = gift.name; $('#gift-error').hidden = true; const person = rsvpForm.elements; const fields = $('#gift-form').elements; if (person.name.value) fields.name.value = person.name.value; openDialog('#gift-dialog'); });
     actions.append(reserve);
     const productUrl = safeUrl(gift.product_url);
     if (productUrl) { const link = element('a', 'gift-product-link', 'Ver en la tienda ↗'); link.setAttribute('aria-label', 'Ver ' + gift.name + ' en la tienda'); link.href = productUrl; link.target = '_blank'; link.rel = 'noopener noreferrer'; actions.append(link); }
@@ -268,7 +268,7 @@
     event.preventDefault(); $('#gift-error').hidden = true;
     const form = event.currentTarget; const submit = form.querySelector('[type=submit]'); setSaving(submit, true, 'Guardando tu reserva…');
     try {
-      const reserved = await api.reserveGift(selectedGift, { name: form.elements.name.value, email: form.elements.email.value });
+      const reserved = await api.reserveGift(selectedGift, { name: form.elements.name.value });
       if (!reserved) { await refreshGifts(); showError('#gift-error', new Error('Alguien acaba de reservar este regalito. Cierra esta ventana y elige otro detalle.')); return; }
       success(api.demo ? '¡Reserva de prueba lista!' : '¡Un detalle lleno de amor!', api.demo ? 'El regalo ya no aparece en tu lista de prueba. Esta reserva solo existe en este navegador y no aparta un regalo real.' : 'Reservaste “' + selectedGift.name + '”. Ya no aparecerá para otros invitados. Puedes consultar o cancelar tu reserva desde “Mis reservas” en este navegador.');
       await refreshGifts();
@@ -284,7 +284,7 @@
         const row = element('article', 'reservation-row'); row.append(element('h3', '', gift.name), element('p', '', api.demo ? 'Reserva de prueba · solo en este navegador' : 'Reservado con amor · pendiente de compra'));
         const actions = element('div', 'reservation-actions');
         const productUrl = safeUrl(gift.product_url);
-        if (productUrl) { const link = element('a', 'text-button', 'Ver en la tienda ↗'); link.href = productUrl; link.target = '_blank'; link.rel = 'noopener noreferrer'; actions.append(link); }
+        if (productUrl) { const link = element('a', 'text-button store-product-link', 'Ver en la tienda ↗'); link.href = productUrl; link.target = '_blank'; link.rel = 'noopener noreferrer'; actions.append(link); }
         const cancel = element('button', 'cancel-reservation', 'Cancelar reserva');
         cancel.addEventListener('click', async () => {
           if (cancel.dataset.confirm !== 'yes') { cancel.dataset.confirm = 'yes'; cancel.textContent = 'Sí, liberar este regalito'; return; }

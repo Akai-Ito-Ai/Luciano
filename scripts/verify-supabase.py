@@ -17,6 +17,8 @@ ROOT = Path(__file__).resolve().parent.parent
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--test-reservations", action="store_true")
+    parser.add_argument("--test-rsvp-validation", action="store_true", help="Validar la nueva firma sin correo con un nombre vacío; no crea respuestas.")
+    parser.add_argument("--snapshot", type=Path, help="Guardar únicamente la lista pública actual, sin modificar reservas.")
     args = parser.parse_args()
     source = (ROOT / "config.js").read_text()
     block = re.search(r"supabase\s*:\s*\{(.*?)\}", source, re.S).group(1)
@@ -42,14 +44,25 @@ def main():
             result = json.loads(error.read())
             raise RuntimeError(f"{name}: HTTP {error.code}, {result.get('message', 'error del servidor')}") from None
 
-    expected = json.loads((ROOT / "supabase/regalos-luciano.json").read_text())
     actual = rpc("invitation_available_gifts")
-    assert [gift["id"] for gift in actual] == [gift["id"] for gift in expected], "La lista u orden no coincide con el Excel."
-    for gift, imported in zip(actual, expected):
-        for key_name in ("name", "description", "category", "icon", "color", "image_url", "product_url"):
+    if args.snapshot:
+        args.snapshot.write_text(json.dumps(actual, ensure_ascii=False, indent=2) + "\n")
+        print(json.dumps({"available_gifts": len(actual), "categories": dict(Counter(gift["category"] for gift in actual))}, ensure_ascii=False))
+        return
+    expected = json.loads((ROOT / "supabase/regalos-luciano.json").read_text())
+    expected_by_id = {gift["id"]: gift for gift in expected}
+    assert set(gift["id"] for gift in actual) <= set(expected_by_id), "Hay regalos disponibles que no están en el Excel."
+    expected_available = [gift for gift in expected if gift["id"] in {row["id"] for row in actual}]
+    assert [gift["id"] for gift in actual] == [gift["id"] for gift in expected_available], "El orden no coincide con el Excel."
+    for gift in actual:
+        imported = expected_by_id[gift["id"]]
+        for key_name in ("name", "description", "category", "icon", "color", "product_url"):
             assert gift[key_name] == imported[key_name], f"Revisar {key_name} de {imported['name']}."
+        if imported["image_url"]:
+            assert gift["image_url"] == imported["image_url"], "Revisar la imagen de " + imported["name"]
     report = {"date": datetime.now(ZoneInfo("America/Bogota")).date().isoformat(), "event_id": event, "connection": "ok", "gifts": len(actual),
-              "categories": dict(Counter(gift["category"] for gift in actual)), "matches_import": True}
+              "categories": dict(Counter(gift["category"] for gift in actual)), "matches_import": True,
+              "catalog_gifts": len(expected), "not_available": len(expected) - len(actual)}
     if args.test_reservations:
         gift_id = actual[0]["id"]
         tokens = [str(uuid.uuid4()), str(uuid.uuid4())]
@@ -57,8 +70,7 @@ def main():
         try:
             def reserve(index):
                 return rpc("invitation_reserve_gift", {"p_gift_id": gift_id, "p_token": tokens[index],
-                                                       "p_name": "Prueba técnica " + str(index + 1),
-                                                       "p_email": f"prueba-{index + 1}@example.com"})
+                                                       "p_name": "Prueba técnica " + str(index + 1)})
             with ThreadPoolExecutor(max_workers=2) as executor:
                 results = list(executor.map(reserve, range(2)))
             assert sorted(results) == [False, True], "Se esperaba una sola reserva exitosa."
@@ -76,6 +88,16 @@ def main():
                                       "hidden_while_reserved": True, "own_reservations_checked": True,
                                       "cancelled_test_reservation": True, "available_after_test": len(restored)}
     report["private_tables_blocked"] = {}
+    if args.test_rsvp_validation:
+        try:
+            rpc("invitation_save_rsvp", {"p_token": str(uuid.uuid4()), "p_name": "", "p_attending": True,
+                                         "p_party_size": 1, "p_message": ""})
+        except RuntimeError as error:
+            if "HTTP 400" not in str(error) or "Revisa tu nombre y número de asistentes" not in str(error):
+                raise
+        else:
+            raise AssertionError("El formulario debe rechazar un nombre vacío.")
+        report["rsvp_without_email_validation"] = "ok"
     for table in ("invitation_rsvps", "invitation_gift_reservations"):
         request = urllib.request.Request(base + "/rest/v1/" + table + "?select=*&limit=0", headers=headers)
         try:

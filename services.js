@@ -22,10 +22,8 @@
 
   function validatePerson(data) {
     const name = String(data.name || '').trim();
-    const email = String(data.email || '').trim().toLowerCase();
     if (name.length < 2 || name.length > 100) throw new Error('Escribe tu nombre (entre 2 y 100 caracteres).');
-    if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Revisa tu correo electrónico.');
-    return { name, email };
+    return { name };
   }
 
   class InvitationAPI {
@@ -88,7 +86,7 @@
       const token = this.token('rsvp-token');
       const payload = { ...person, attending: data.attending, partySize, message };
       if (this.demo) this.write('demo-rsvp', payload);
-      else await this.rpc('invitation_save_rsvp', { p_token: token, p_name: person.name, p_email: person.email, p_attending: data.attending, p_party_size: partySize, p_message: message });
+      else await this.rpc('invitation_save_rsvp', { p_token: token, p_name: person.name, p_attending: data.attending, p_party_size: partySize, p_message: message });
       // Only cache successful writes. Personal contact data is not cached in live mode.
       this.write('rsvp-status', { attending: data.attending, savedAt: new Date().toISOString() });
       return payload;
@@ -102,7 +100,7 @@
         reservations[gift.id] = { token, name: person.name };
         this.write('demo-reservations', reservations);
       } else {
-        const reserved = await this.rpc('invitation_reserve_gift', { p_gift_id: gift.id, p_token: token, p_name: person.name, p_email: person.email });
+        const reserved = await this.rpc('invitation_reserve_gift', { p_gift_id: gift.id, p_token: token, p_name: person.name });
         if (!reserved) return false;
       }
       const mine = this.read('my-gifts', []);

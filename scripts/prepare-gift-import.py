@@ -1,6 +1,7 @@
 """Convierte la lista de los papás en datos de importación, sin editar el Excel."""
 import argparse
 import csv
+from collections import Counter
 import hashlib
 import json
 from pathlib import Path
@@ -60,15 +61,27 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("source", type=Path)
     parser.add_argument("--output", type=Path, default=Path("supabase"))
+    parser.add_argument("--separate-units", action="store_true", help="Tratar filas repetidas como unidades reservables independientes.")
+    parser.add_argument("--deduplicate-url", action="append", default=[], help="Conservar solo la primera fila de este enlace, según indicación de los papás.")
+    parser.add_argument("--date", help="Fecha de la importación, YYYY-MM-DD.")
     args = parser.parse_args()
-    gifts, notes = [], []
+    gifts, notes, omitted = [], [], []
+    occurrences = Counter()
+    deduplicate = {product_url(value) for value in args.deduplicate_url}
+    source_rows = read_rows(args.source)
     categories = {"Ropita": ("clothes", "sage"), "Baño": ("bath", "peach"),
                   "Alimentación": ("bottle", "sage"), "Accesorios": ("bear", "sand")}
-    for position, (row, values) in enumerate(read_rows(args.source), 1):
+    for row, values in source_rows:
         name, category, description = (values.get(col, "") for col in "ABC")
         if not 2 <= len(name) <= 100 or len(description) > 300 or category not in categories:
             raise ValueError(f"Revisar nombre, categoría o detalles en la fila {row}.")
         link = product_url(values.get("D", ""))
+        if occurrences[link] and link in deduplicate:
+            omitted.append({"row": row, "name": name, "reason": "Duplicado omitido por indicación de los papás."})
+            continue
+        occurrences[link] += 1
+        if occurrences[link] > 1 and not args.separate_units:
+            raise ValueError(f"Enlace repetido en fila {row}: confirmar si representa otra unidad reservable.")
         image = values.get("E", "")
         if image and urlsplit(image).scheme != "https":
             raise ValueError(f"La imagen de la fila {row} debe usar HTTPS.")
@@ -78,10 +91,11 @@ def main():
                 icon = "book"
             elif any(term in name.lower() for term in ("sonidos", "cuna")):
                 icon = "blanket"
-        gifts.append({"id": str(uuid.uuid5(uuid.NAMESPACE_URL, EVENT_ID + ":" + link)),
+        identity = EVENT_ID + ":" + link + (":unit:" + str(occurrences[link]) if occurrences[link] > 1 else "")
+        gifts.append({"id": str(uuid.uuid5(uuid.NAMESPACE_URL, identity)),
                       "event_id": EVENT_ID, "name": name, "description": description,
                       "category": category, "icon": icon, "color": color, "image_url": image,
-                      "product_url": link, "sort_order": position * 10, "enabled": True})
+                      "product_url": link, "sort_order": (len(gifts) + 1) * 10, "enabled": True})
         if not description:
             notes.append(f"Fila {row}: {name}, sin descripción en el Excel.")
     if len({gift["id"] for gift in gifts}) != len(gifts):
@@ -94,7 +108,7 @@ def main():
         writer.writeheader()
         writer.writerows({**gift, "enabled": "true"} for gift in gifts)
     quote = lambda value: "true" if value is True else str(value) if isinstance(value, int) else "'" + str(value).replace("'", "''") + "'"
-    lines = ["-- Lista preliminar de los papás, 12 de noviembre de 2026.",
+    lines = ["-- Lista de los papás" + (", importación del " + args.date if args.date else "") + ".",
              "-- Importación repetible: conserva IDs, reservas, imágenes existentes y estado enabled.",
              "begin;", "insert into public.invitation_events(id,name) values ('luciano-2026','Baby shower de Luciano Mejía Villamizar') on conflict(id) do nothing;",
              "insert into public.invitation_gifts (" + ",".join(gifts[0]) + ") values"]
@@ -107,8 +121,10 @@ def main():
                   "commit;", ""])
     (args.output / "importar-regalos-luciano.sql").write_text("\n".join(lines))
     report = {"source": args.source.name, "source_sha256": hashlib.sha256(args.source.read_bytes()).hexdigest(),
+              "date": args.date, "source_rows": len(source_rows), "omitted": omitted,
               "gifts": len(gifts), "categories": {category: sum(g["category"] == category for g in gifts) for category in categories},
-              "images": sum(bool(g["image_url"]) for g in gifts), "notes": notes}
+              "images": sum(bool(g["image_url"]) for g in gifts), "notes": notes,
+              "separate_units": [{"product_url": link, "units": count} for link, count in occurrences.items() if count > 1]}
     (args.output / "importacion-regalos-resumen.json").write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n")
     print(json.dumps(report, ensure_ascii=False))
 

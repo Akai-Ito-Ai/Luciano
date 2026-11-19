@@ -1,6 +1,6 @@
 # El baby shower de Luciano
 
-Invitación para **Luciano Mejía Villamizar**, el **sábado 12 de diciembre de 2026**. Hora y lugar pendientes. Invitación infantil pensada para celular, con sobre de bienvenida, dinosaurios animados, reproductor de música, calendario descargable, confirmaciones y reservas de regalos.
+Invitación para **Luciano Mejía Villamizar**, el **sábado 12 de diciembre de 2026**. Detalles del evento configurables en `config.js`. Invitación infantil pensada para celular, con sobre de bienvenida, dinosaurios animados, reproductor de música, calendario descargable, confirmaciones y reservas de regalos.
 
 ## Ver la invitación
 
@@ -24,9 +24,9 @@ La primera versión usa 2026 porque el pedido se hizo en octubre de ese año. Ca
 
 El contenido vive en una sola columna centrada de hasta 480 píxeles, sin encabezado ni menú. Un sobre verde oliva cubre inicialmente la pantalla y bloquea el desplazamiento. El sello dorado **VER INVITACIÓN** abre el sobre hacia arriba en un segundo; entonces se habilita el contenido, se devuelve el desplazamiento y comienzan las animaciones visibles. `welcome.js` gestiona esta apertura, el foco de teclado y la preferencia de movimiento reducido.
 
-Caveat da el carácter manuscrito a los títulos, al nombre y a los números; Quicksand se usa en los detalles. Los fondos crema y salvia alternan con divisores SVG irregulares que simulan papel rasgado. Los dinosaurios no tienen marcos, bordes ni sombras: el modo de mezcla y un desvanecimiento suave de sus bordes los integran sobre el papel. Los regalos aparecen en una lista vertical sin tarjetas blancas, y los botones son píldoras verdes.
+Caveat da el carácter manuscrito a los títulos, al nombre y a los números; Quicksand se usa en los detalles. Los fondos crema y salvia alternan con divisores SVG irregulares que simulan papel rasgado. Los dinosaurios no tienen marcos, bordes ni sombras: el modo de mezcla y un desvanecimiento suave de sus bordes los integran sobre el papel. Los regalos aparecen en una lista vertical sin tarjetas blancas, y los botones son píldoras verdes. Los enlaces de tienda usan un verde ligeramente más claro que los botones de reserva, con contraste de texto blanco superior a 4.5:1.
 
-Los campos de formulario tienen texto de 16 píxeles; el mensaje opcional se despliega cuando se necesita. Los formularios indican cuándo están guardando y conservan los datos si hay un error. La apertura del sobre no reproduce música: el invitado elige cuándo pulsar play.
+Los formularios piden el nombre, sin correo electrónico. Los campos tienen texto de 16 píxeles; el mensaje opcional se despliega cuando se necesita. Los formularios indican cuándo están guardando y conservan los datos si hay un error. La apertura del sobre no reproduce música: el invitado elige cuándo pulsar play.
 
 La sección de regalos tiene cuatro pestañas horizontales: **Ropita, Baño, Alimentación y Accesorios**, con contadores y desplazamiento lateral en celular. Solo el panel de la categoría seleccionada es visible. Las pestañas también funcionan con las flechas del teclado, Inicio y Fin. Al actualizar las reservas se conserva la categoría elegida; si queda vacía, aparece un mensaje para explorar otra pestaña.
 
@@ -59,18 +59,17 @@ Con Supabase, la lista vuelve a consultarse cada 20 segundos y al regresar a la 
 
 ## Datos y privacidad
 
-La lista preliminar del 12 de noviembre de 2026 contiene 16 regalos reales: 2 de Ropita, 4 de Baño, 3 de Alimentación y 7 de Accesorios. Se importó desde `Lista regalos completada.xlsx`, sin modificar ese archivo. Los paquetes de varias piezas cuentan como un regalo reservable. Los enlaces conservan el producto y sus variantes, retirando parámetros de seguimiento. No se proporcionaron fotos; se usan los iconos incluidos. El esterilizador Momcozy quedó sin descripción, tal como venía en el Excel.
-
-Los datos de importación están en `supabase/regalos-luciano.json` y `supabase/regalos-luciano.csv`. La consulta `supabase/importar-regalos-luciano.sql` puede volver a ejecutarse con esta misma lista sin duplicar artículos: conserva los identificadores, las reservas, el estado de visibilidad y las fotos ya agregadas. El script `scripts/prepare-gift-import.py` permite preparar una nueva importación desde un Excel con las mismas columnas. Revisar los cambios antes de ejecutar el SQL.
+La actualización del 18 de noviembre de 2026 contiene 41 regalos: 13 de Ropita, 5 de Baño, 5 de Alimentación y 18 de Accesorios. El Excel original tiene 42 filas. Por indicación de los papás se omitió el segundo pack Bodycool y se conservaron dos sábanas como regalos reservables independientes. Los 16 identificadores anteriores se conservaron, junto con la reserva que ya existía; al finalizar la actualización había 40 regalos disponibles. El archivo original no se modificó. Las fotos siguen opcionales y se usan los iconos incluidos cuando no hay imagen. El esterilizador Momcozy sigue sin descripción en la fuente.
+Los datos de importación están en `supabase/regalos-luciano.json` y `supabase/regalos-luciano.csv`. La consulta `supabase/importar-regalos-luciano.sql` puede volver a ejecutarse con esta misma lista sin duplicar artículos: conserva los identificadores, las reservas, el estado de visibilidad y las fotos ya agregadas. El script `scripts/prepare-gift-import.py` permite preparar una nueva importación desde un Excel con las mismas columnas. `--separate-units` conserva filas repetidas como unidades independientes y `--deduplicate-url` permite omitir duplicados de un producto concreto. La consulta aplicada, con comprobación de conservación de reservas, está en `supabase/actualizar-luciano-2026-11-18.sql`. Revisar los cambios antes de ejecutar el SQL.
 
 Las tablas tienen RLS activado, sin acceso directo para visitantes. Cinco funciones con permisos limitados permiten ver regalos libres, confirmar, reservar, consultar las reservas propias mediante un token aleatorio y cancelarlas. Ninguna respuesta pública contiene nombres ni correos de otros invitados. Los tokens de reserva se conservan en el navegador: una persona puede gestionar las reservas realizadas allí. No borres el almacenamiento de ese navegador si quieres conservar esa posibilidad.
 
-Las confirmaciones se pueden corregir desde el mismo navegador. Un correo ya confirmado desde otro dispositivo no puede sobrescribirse sin su token; los papás pueden corregirlo desde Supabase. Un reintento después de un corte de red es idempotente. El nombre y correo se envían a Supabase únicamente al guardar. No hay analítica. Se importan Caveat y Quicksand desde Google Fonts y se incluyen copias locales de respaldo con sus licencias.
+Las confirmaciones se pueden corregir desde el mismo navegador. La identidad de cada respuesta se conserva con su token; los papás pueden corregirla desde Supabase si se cambia de navegador. Un reintento después de un corte de red es idempotente. Solo se envía el nombre al guardar, junto con la respuesta o regalo seleccionado; ya no se solicita ni se envía correo. Los correos históricos se conservan como datos opcionales, sin alterar registros anteriores. No hay analítica. Se importan Caveat y Quicksand desde Google Fonts y se incluyen copias locales de respaldo con sus licencias.
 
 En Supabase, los papás pueden ver y exportar `invitation_rsvps` y `invitation_gift_reservations` desde Table Editor. Para ver qué regalo reservó cada persona:
 
 ```sql
-select g.name as regalo, r.name as invitado, r.email, r.created_at
+select g.name as regalo, r.name as invitado, r.created_at
 from public.invitation_gift_reservations r
 join public.invitation_gifts g on g.id = r.gift_id
 where r.event_id = 'luciano-2026'
@@ -83,13 +82,15 @@ Es un sitio estático: sube `index.html`, `styles.css`, los cinco archivos JavaS
 
 ## Estado de validación
 
-Supabase quedó conectado y la lista de 16 regalos se cargó el 12 de noviembre de 2026. Se corrigió la URL en `config.js`: debe apuntar a la raíz del proyecto, sin `/rest/v1/`. La clave pública se conserva. La consulta pública devolvió los 16 registros y se compararon nombres, descripciones, categorías y enlaces con la importación.
+Supabase quedó conectado el 12 de noviembre y se actualizó el 18 de noviembre de 2026 con los 41 regalos del catálogo. La URL de `config.js` apunta a la raíz del proyecto, sin `/rest/v1/`. La clave pública se conserva. Se compararon nombres, descripciones, categorías y enlaces de los regalos disponibles con la importación.
 
-Se probaron dos reservas simultáneas del mismo artículo contra Supabase real: solo una tuvo éxito. El regalo dejó de aparecer en la lista pública, se consultó la reserva con su token y después se canceló la reserva de prueba. Al finalizar volvieron a estar disponibles los 16 regalos. También se verificó que la clave pública no permite consultar directamente las tablas de asistentes y reservas. El resultado está en `supabase/verificacion-conexion.json`. No se dejaron reservas de prueba. `scripts/verify-supabase.py` repite la comprobación de lectura; `--test-reservations` agrega la prueba temporal y su cancelación.
+La migración `supabase/migrations/2026-11-18-no-email.sql` permite confirmar asistencia y reservar solo con nombre. Conserva las firmas anteriores para páginas en caché, los tokens y los permisos de acceso. Para una instalación nueva, `supabase/schema.sql` ya incluye los formularios sin correo; no ejecutar el esquema inicial de nuevo sobre una base existente.
 
-La portada se verificó en Brave. Los flujos de confirmación y rechazo de asistencia se probaron previamente con almacenamiento de prueba y solicitudes simuladas; aún falta su prueba final contra la base real. Las reservas de regalos sí se verificaron contra Supabase real, como se describe arriba.
+Se probaron dos reservas simultáneas sin correo contra Supabase real: solo una tuvo éxito. Se consultó y canceló únicamente la reserva temporal. La reserva anterior permaneció intacta y volvieron a estar disponibles 40 regalos. También se verificó que la clave pública no permite leer directamente las tablas de asistentes y reservas. El resultado está en `supabase/verificacion-conexion.json`.
 
-La publicación con Sites no se pudo completar: el servicio devolvió `Sites is not yet enabled for this workspace`. No hay un sitio remoto publicado. El servidor local es temporal y se puede volver a iniciar con el comando anterior.
+La confirmación de asistencia sin correo, dos respuestas de personas con el mismo nombre y la actualización de una respuesta a “no asistiré” se comprobaron en una subtransacción revertida dentro de la actualización: no se dejaron respuestas ficticias. Los formularios y solicitudes del navegador también se verifican con `scripts/test-name-only.mjs`.
+
+La invitación está publicada en <https://luciano-beta.vercel.app/> desde el repositorio `Akai-Ito-Ai/Luciano`. El servidor local puede iniciarse con el comando anterior.
 
 ## Recursos
 
